@@ -1,0 +1,27 @@
+id_leader = _{ LETTER | CONNECTOR_PUNCTUATION }
+id = @{ id_leader ~ (id_leader | NUMBER)* ~ ("!" | "'")* }
+
+dec_literal = @{ ASCII_NONZERO_DIGIT ~ ("_"? ~ ASCII_DIGIT)* }
+hex_literal = @{ ("_"? ~ ASCII_HEX_DIGIT)+ }
+oct_literal = @{ ("_"? ~ ASCII_OCT_DIGIT)+ }
+bin_literal = @{ ("_"? ~ ASCII_BIN_DIGIT)+ }
+
+// optional newline break
+br = _{ NEWLINE* }
+
+// line terminator
+term = _{ (NEWLINE | ";") ~ NEWLINE* }
+
+module = { SOI ~ br ~ (decl ~ term)* ~ EOI }
+decl = { id ~ "=" ~ br ~ literal }
+literal = ${
+    dec_literal
+    | "0" ~ ("x" | "X") ~ hex_literal
+    | "0" ~ ("o" | "O") ~ oct_literal
+    | "0" ~ ("b" | "B") ~ bin_literal
+}
+
+multiline_comment = _{ "/*" ~ (multiline_comment | !"*" ~ ANY | "*" ~ !"/" ~ ANY)* ~ "*/" }
+
+COMMENT = _{ "//" ~ (!NEWLINE ~ ANY)* | multiline_comment }
+WHITESPACE = _{ " " | "\t" }

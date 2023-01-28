@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use crate::ast::{Decl, Module as PewterModule};
+use crate::ast::{Compunit, Def};
 use inkwell::builder::Builder;
 use inkwell::context::Context;
 use inkwell::module::Module as LLVMModule;
@@ -11,13 +11,13 @@ use inkwell::OptimizationLevel;
 
 const DISPLAY_LLVM_BITCODE: bool = true;
 
-impl Decl {
+impl Def {
     fn codegen<'ctx>(
         &self,
         ctx: &'ctx Context,
         module: &inkwell::module::Module<'ctx>,
     ) -> inkwell::values::GlobalValue<'ctx> {
-        let Decl(id, value) = self;
+        let Def(id, value) = self;
         let i32_t = ctx.i32_type();
         let glob = module.add_global(i32_t, None, id.as_str());
         glob.set_constant(true);
@@ -27,11 +27,11 @@ impl Decl {
     }
 }
 
-impl PewterModule {
+impl Compunit {
     pub fn codegen<'ctx>(&self, ctx: &'ctx Context, _builder: &Builder) -> LLVMModule<'ctx> {
         let llvm_module = ctx.create_module(self.name.as_str());
-        for decl in &self.decls {
-            decl.codegen(ctx, &llvm_module);
+        for def in &self.defs {
+            def.codegen(ctx, &llvm_module);
         }
         llvm_module
     }

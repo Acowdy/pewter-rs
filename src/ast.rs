@@ -1,8 +1,10 @@
+/// A top level definition.
 #[derive(Debug)]
-pub struct Decl(pub String, pub i32);
+pub struct Def(pub String, pub i32);
 
+/// A compilation unit, usually a single file.
 #[derive(Debug)]
-pub struct Module {
+pub struct Compunit {
     pub name: String,
-    pub decls: Vec<Decl>,
+    pub defs: Vec<Def>,
 }

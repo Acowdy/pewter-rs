@@ -20,7 +20,7 @@ enum Command {
 
 fn build(src: &PathBuf, out: &PathBuf) {
     let src = fs::read_to_string(src).unwrap();
-    let module: pewter::ast::Module = match src.parse() {
+    let module: pewter::ast::Compunit = match src.parse() {
         Ok(parsed) => parsed,
         Err(err) => {
             eprintln!("{}", err);

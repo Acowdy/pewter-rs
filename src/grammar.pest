@@ -12,8 +12,8 @@ br = _{ NEWLINE* }
 // line terminator
 term = _{ (NEWLINE | ";") ~ NEWLINE* }
 
-module = { SOI ~ br ~ (decl ~ term)* ~ EOI }
-decl = { id ~ "=" ~ br ~ literal }
+compunit = { SOI ~ br ~ (def ~ term)* ~ EOI }
+def = { id ~ "=" ~ br ~ literal }
 literal = ${
     dec_literal
     | "0" ~ ("x" | "X") ~ hex_literal

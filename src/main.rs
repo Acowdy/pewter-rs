@@ -1,25 +1,25 @@
-use std::{env, fs, path::Path, process::exit};
+use clap::Parser;
+use clap::Subcommand;
+use std::fs;
+use std::path::PathBuf;
+use std::process::exit;
 
 use pewter;
 
-fn main() {
-    let mut args = env::args();
-    args.next().unwrap();
-    let src_path = match args.next() {
-        Some(s) => s,
-        None => {
-            eprintln!("Error: expected argument 'source path'");
-            exit(1);
-        }
-    };
-    let out_path = match args.next() {
-        Some(s) => s,
-        None => {
-            eprintln!("Error: expected argument 'output path'");
-            exit(1);
-        }
-    };
-    let src = fs::read_to_string(src_path).unwrap();
+#[derive(Parser)]
+#[command(about, author, version, long_about = None)]
+struct Cli {
+    #[command(subcommand)]
+    command: Command,
+}
+
+#[derive(Subcommand)]
+enum Command {
+    Build { src: PathBuf, out: PathBuf },
+}
+
+fn build(src: &PathBuf, out: &PathBuf) {
+    let src = fs::read_to_string(src).unwrap();
     let module: pewter::ast::Module = match src.parse() {
         Ok(parsed) => parsed,
         Err(err) => {
@@ -27,6 +27,12 @@ fn main() {
             exit(1);
         }
     };
+    module.codegen_to_object_file(&out);
+}
 
-    module.codegen_to_object_file(&Path::new(out_path.as_str()));
+fn main() {
+    let cli = Cli::parse();
+    match cli.command {
+        Command::Build { src, out } => build(&src, &out),
+    }
 }

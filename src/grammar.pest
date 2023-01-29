@@ -2,9 +2,15 @@ id_leader = _{ LETTER | CONNECTOR_PUNCTUATION }
 id = @{ id_leader ~ (id_leader | NUMBER)* ~ ("!" | "'")* }
 
 dec_literal = @{ ASCII_NONZERO_DIGIT ~ ("_"? ~ ASCII_DIGIT)* }
-hex_literal = @{ ("_"? ~ ASCII_HEX_DIGIT)+ }
-oct_literal = @{ ("_"? ~ ASCII_OCT_DIGIT)+ }
-bin_literal = @{ ("_"? ~ ASCII_BIN_DIGIT)+ }
+hex_literal = @{ ASCII_HEX_DIGIT ~ ("_"? ~ ASCII_HEX_DIGIT)* }
+oct_literal = @{ ASCII_OCT_DIGIT ~ ("_"? ~ ASCII_OCT_DIGIT)* }
+bin_literal = @{ ASCII_BIN_DIGIT ~ ("_"? ~ ASCII_BIN_DIGIT)* }
+int_literal = ${
+    dec_literal
+    | "0" ~ ("x" | "X") ~ hex_literal
+    | "0" ~ ("o" | "O") ~ oct_literal
+    | "0" ~ ("b" | "B") ~ bin_literal
+}
 
 // optional newline break
 br = _{ NEWLINE* }
@@ -14,12 +20,7 @@ term = _{ (NEWLINE | ";") ~ NEWLINE* }
 
 compunit = { SOI ~ br ~ (def ~ term)* ~ EOI }
 def = { id ~ "=" ~ br ~ literal }
-literal = ${
-    dec_literal
-    | "0" ~ ("x" | "X") ~ hex_literal
-    | "0" ~ ("o" | "O") ~ oct_literal
-    | "0" ~ ("b" | "B") ~ bin_literal
-}
+literal = ${ int_literal }
 
 multiline_comment = _{ "/*" ~ (multiline_comment | !"*" ~ ANY | "*" ~ !"/" ~ ANY)* ~ "*/" }
 

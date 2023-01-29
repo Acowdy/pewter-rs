@@ -1,33 +1,46 @@
 use std::path::Path;
 
-use crate::ast::{Compunit, Def};
+use crate::ast;
 use inkwell::builder::Builder;
 use inkwell::context::Context;
 use inkwell::module::Module as LLVMModule;
 use inkwell::targets::{
     CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetMachine,
 };
+use inkwell::types::IntType;
+use inkwell::values::IntValue;
 use inkwell::OptimizationLevel;
 
 const DISPLAY_LLVM_BITCODE: bool = true;
 
-impl Def {
+impl ast::Literal {
+    fn codegen<'ctx>(&self, ctx: &'ctx Context) -> (IntType<'ctx>, IntValue<'ctx>) {
+        match self {
+            Self::Int(i) => {
+                let t = ctx.i32_type();
+                let v = t.const_int(*i as u64, true);
+                (t, v)
+            }
+        }
+    }
+}
+
+impl ast::Def {
     fn codegen<'ctx>(
         &self,
         ctx: &'ctx Context,
         module: &inkwell::module::Module<'ctx>,
     ) -> inkwell::values::GlobalValue<'ctx> {
-        let Def(id, value) = self;
-        let i32_t = ctx.i32_type();
-        let glob = module.add_global(i32_t, None, id.as_str());
+        let ast::Def(id, lit) = self;
+        let (t, v) = lit.codegen(ctx);
+        let glob = module.add_global(t, None, id.as_str());
         glob.set_constant(true);
-        let value = i32_t.const_int(*value as u64, true);
-        glob.set_initializer(&value);
+        glob.set_initializer(&v);
         glob
     }
 }
 
-impl Compunit {
+impl ast::Compunit {
     pub fn codegen<'ctx>(&self, ctx: &'ctx Context, _builder: &Builder) -> LLVMModule<'ctx> {
         let llvm_module = ctx.create_module(self.name.as_str());
         for def in &self.defs {

@@ -8,21 +8,6 @@ use pest_derive::Parser;
 #[grammar = "grammar.pest"]
 struct PewterParser;
 
-fn parse_def(def: Pair<Rule>) -> ast::Def {
-    let mut pairs = def.into_inner();
-    let id = pairs.next().unwrap().as_str().to_owned();
-    let lit = pairs.next().unwrap().into_inner().next().unwrap();
-    let radix = match lit.as_rule() {
-        Rule::dec_literal => 10,
-        Rule::hex_literal => 16,
-        Rule::oct_literal => 8,
-        Rule::bin_literal => 2,
-        _ => unreachable!(),
-    };
-    let value = i32::from_str_radix(&lit.as_str(), radix).unwrap();
-    ast::Def(id, value)
-}
-
 impl FromStr for ast::Compunit {
     type Err = pest::error::Error<Rule>;
 
@@ -42,4 +27,33 @@ impl FromStr for ast::Compunit {
             defs,
         })
     }
+}
+
+fn parse_def(def: Pair<Rule>) -> ast::Def {
+    let mut pairs = def.into_inner();
+    let id = pairs.next().unwrap().as_str().to_owned();
+    let lit = parse_literal(pairs.next().unwrap());
+    ast::Def(id, lit)
+}
+
+fn parse_literal(lit: Pair<Rule>) -> ast::Literal {
+    let inner = lit.into_inner().next().unwrap();
+    match inner.as_rule() {
+        Rule::int_literal => parse_int_literal(inner),
+        _ => unreachable!(),
+    }
+}
+
+fn parse_int_literal(lit: Pair<Rule>) -> ast::Literal {
+    let inner = lit.into_inner().next().unwrap();
+    let radix = match inner.as_rule() {
+        Rule::dec_literal => 10,
+        Rule::hex_literal => 16,
+        Rule::oct_literal => 8,
+        Rule::bin_literal => 2,
+        _ => unreachable!(),
+    };
+    let to_parse = inner.as_str().replace("_", "");
+    let value = i32::from_str_radix(&to_parse, radix).unwrap();
+    ast::Literal::Int(value)
 }
